@@ -4,6 +4,7 @@ import "./App.css";
 
 function App() {
   const [file, setFile] = useState();
+  const [data, setData] = useState();
 
   const handleFileChange = (e) => {
     if (e.target.files) {
@@ -16,6 +17,10 @@ function App() {
       return;
     }
 
+    if (file.type !== "text/csv") {
+      return alert("Upload CSV file");
+    }
+
     const data = new FormData();
     data.append("file", file);
 
@@ -25,16 +30,35 @@ function App() {
       },
     });
 
-    console.log("response", response);
+    if (response?.data) {
+      setData(response?.data);
+    }
   };
   return (
-    <div>
+    <section className="main">
       <input type="file" onChange={handleFileChange} />
-
-      <div>{file && `${file.name} - ${file.type}`}</div>
-
+      <div className="fileDetails">
+        <p>{file && `Uploaded file: ${file.name}`}</p>
+        <p>{file && `File Type: ${file.type}`}</p>
+      </div>
       <button onClick={handleUploadClick}>Upload</button>
-    </div>
+      {data && (
+        <div className="result">
+          <p>
+            Sheet Link:{" "}
+            <a href={data?.sheet} target="__blank">
+              {data?.sheet}
+            </a>
+          </p>
+          <p>
+            Chart Link:{" "}
+            <a href={data?.chart} target="__blank">
+              {data?.chart}
+            </a>
+          </p>
+        </div>
+      )}
+    </section>
   );
 }
 

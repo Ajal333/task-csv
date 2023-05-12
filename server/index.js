@@ -5,11 +5,14 @@ import cors from "cors";
 import fs from "fs";
 import ExcelJs from "exceljs";
 import { ChartJSNodeCanvas } from "chartjs-node-canvas";
+import exp from "constants";
 
 const server = express();
 const port = process?.env?.PORT || 8080;
 const multerUpload = multer({ dest: "/temp" });
+
 server.use(cors());
+server.use(express.static("public"));
 
 server.get("/", (_, res) => res.status(200).send({ hello: "there" }));
 
@@ -19,7 +22,7 @@ server.post("/upload", multerUpload.single("file"), (req, res) => {
   csv
     .parseFile(req?.file?.path)
     .on("data", function (row) {
-      if (Object.values(row).some((x) => x !== null && x !== "")) {
+      if (Object.values(row).every((x) => x !== null && x !== "")) {
         fileRows.push(row);
         if (row[2]) {
           genderData[row[2]]++;
@@ -31,8 +34,8 @@ server.post("/upload", multerUpload.single("file"), (req, res) => {
       const doc = new ExcelJs.Workbook();
       const sheet = doc.addWorksheet("xena_nodejs_task");
       sheet.columns = [
-        { header: "Id", key: "id", width: 10 },
-        ...Object.keys(fileRows[0]).map((row) => ({
+        { header: "Sl", key: "id", width: 10 },
+        ...fileRows[0].map((row) => ({
           header: row,
           key: row,
           width: 10,
@@ -59,7 +62,10 @@ server.post("/upload", multerUpload.single("file"), (req, res) => {
       };
       const image = await canvas.renderToBuffer(configuration);
       fs.writeFileSync("./public/chart.png", image);
-      res.status(200).send({ fileRows, genderData });
+      res.status(200).send({
+        sheet: "http://localhost:8080/sheet.xlsx",
+        chart: "http://localhost:8080/chart.png",
+      });
     });
 });
 

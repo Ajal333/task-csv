@@ -18,13 +18,13 @@ server.get("/", (_, res) => res.status(200).send({ hello: "there" }));
 
 server.post("/upload", multerUpload.single("file"), (req, res) => {
   const fileRows = [];
-  let genderData = { Male: 0, Female: 0, Others: 0 };
+  let genderData = { Male: 0, Female: 0 };
   csv
     .parseFile(req?.file?.path)
     .on("data", function (row) {
       if (Object.values(row).every((x) => x !== null && x !== "")) {
         fileRows.push(row);
-        if (row[2]) {
+        if (row[2] && ["Male", "Female"].includes(row[2])) {
           genderData[row[2]]++;
         }
       }
@@ -35,13 +35,14 @@ server.post("/upload", multerUpload.single("file"), (req, res) => {
       const sheet = doc.addWorksheet("xena_nodejs_task");
       sheet.columns = [
         { header: "Sl", key: "id", width: 10 },
-        ...fileRows[0].map((row) => ({
-          header: row,
+        ...Object.keys(fileRows[0]).map((row) => ({
+          header: fileRows[0][row],
           key: row,
-          width: 10,
+          width: 20,
         })),
       ];
-      fileRows.forEach((item, index) => {
+
+      fileRows.slice(1).forEach((item, index) => {
         sheet.addRow({ id: index + 1, ...item });
       });
       await doc.xlsx.writeFile("./public/sheet.xlsx");
@@ -55,7 +56,18 @@ server.post("/upload", multerUpload.single("file"), (req, res) => {
         type: "pie",
         data: {
           labels: Object.keys(genderData),
-          datasets: [{ data: Object.values(genderData) }],
+          datasets: [
+            {
+              label: "Gender ratio",
+              data: Object.values(genderData),
+              backgroundColor: [
+                "rgba(255, 99, 132, 0.2)",
+                "rgba(54, 162, 235, 0.2)",
+              ],
+              borderColor: ["rgba(255,99,132,1)", "rgba(54, 162, 235, 1)"],
+              borderWidth: 1,
+            },
+          ],
         },
         options: {},
         plugins: [],

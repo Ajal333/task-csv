@@ -5,7 +5,6 @@ import cors from "cors";
 import fs from "fs";
 import ExcelJs from "exceljs";
 import { ChartJSNodeCanvas } from "chartjs-node-canvas";
-import exp from "constants";
 
 const server = express();
 const port = process?.env?.PORT || 8080;
@@ -17,6 +16,7 @@ server.use(express.static("public"));
 server.get("/", (_, res) => res.status(200).send({ hello: "there" }));
 
 server.post("/upload", multerUpload.single("file"), (req, res) => {
+  // Excel
   const fileRows = [];
   let genderData = { Male: 0, Female: 0 };
   csv
@@ -74,6 +74,7 @@ server.post("/upload", multerUpload.single("file"), (req, res) => {
       };
       const image = await canvas.renderToBuffer(configuration);
       fs.writeFileSync("./public/chart.png", image);
+
       res.status(200).send({
         sheet: "http://localhost:8080/sheet.xlsx",
         chart: "http://localhost:8080/chart.png",
